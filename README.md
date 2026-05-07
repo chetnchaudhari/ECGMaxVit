@@ -29,7 +29,7 @@ Manual ECG interpretation is time-consuming and requires expert knowledge. This 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/ECGMaxViT.git
+git clone https://github.com/chetnchaudhari/ECGMaxVit.git
 cd ECGMaxViT
 
 # 2. Install dependencies
@@ -298,7 +298,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ---
 
-## 🙏 Acknowledgements
+##  Acknowledgements
 
 - [timm](https://github.com/huggingface/pytorch-image-models) — EfficientNetV2-S and MaxViT pretrained model weights
 - [Mendeley Data](https://data.mendeley.com/datasets/gwbz3fsgp8) — ECG Image Dataset
