@@ -1,26 +1,26 @@
 # ECG Classification using ECGMaxViT
 
-> A hybrid deep learning model combining **EfficientNetV2-S (CNN)** and **MaxViT (Vision Transformer)** for automated 12-lead ECG image classification.
+> A custom hybrid CNN-Transformer architecture combining **EfficientNetV2-S** and **MaxViT** for automated 12-lead ECG image classification into 4 cardiac conditions.
 
 ---
 
 ## 📌 Project Description
 
-This project classifies 12-lead ECG images into **4 cardiac conditions** using a novel hybrid architecture called **ECGMaxViT**. It combines the local feature extraction power of a CNN backbone with the global contextual understanding of a Multi-Axis Vision Transformer (MaxViT).
+This project classifies 12-lead ECG images into **4 cardiac conditions** using a custom hybrid architecture called **ECGMaxViT**. It combines the local feature extraction of a CNN backbone (EfficientNetV2-S) with the global contextual understanding of a Multi-Axis Vision Transformer (MaxViT).
 
 **Problem it solves:**
-Manual ECG interpretation is time-consuming and requires expert knowledge. This model automates the classification process, helping in early and accurate detection of cardiac conditions such as Myocardial Infarction (MI), Abnormal Heartbeat (AHB), Previous Myocardial Infarction (PMI), and Normal ECG.
+Manual ECG interpretation is time-consuming and requires expert knowledge. This model automates the classification process, helping in early and accurate detection of cardiac conditions — Myocardial Infarction (MI), Abnormal Heartbeat (AHB), Previous Myocardial Infarction (PMI), and Normal ECG.
 
 ---
 
 ## ✨ Features
 
-- Hybrid CNN + Vision Transformer architecture (ECGMaxViT)
+- Custom hybrid CNN + Vision Transformer architecture (ECGMaxViT)
 - Automatic dataset discovery and class mapping
-- Clinically-aware data augmentation (color space transforms only — no rotation/flip)
+- Clinically-aware data augmentation — rotations and flips were avoided because they can distort ECG waveform morphology and lead polarity
 - Gradient accumulation for effective larger batch training
 - Early stopping with model checkpointing
-- Training visualization (loss curves, confusion matrix)
+- Training visualization (loss curves, accuracy curves, confusion matrix)
 - Multi-class accuracy, F1-score, precision, and recall evaluation
 
 ---
@@ -29,7 +29,7 @@ Manual ECG interpretation is time-consuming and requires expert knowledge. This 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/chetnchaudhari/ECGMaxVit.git
+git clone https://github.com/YOUR_USERNAME/ECGMaxViT.git
 cd ECGMaxViT
 
 # 2. Install dependencies
@@ -56,13 +56,35 @@ jupyter notebook ECGMaxViT.ipynb
 
 > Update the `DATA_ROOT` variable in **Section 3** of the notebook to point to your local dataset folder.
 
-### Loading a Saved Model
+### Inference Example
 ```python
 import torch
+from PIL import Image
+from torchvision import transforms
 
+# Load model
 model = ECGMaxViT(num_classes=4, pretrained=False)
 model.load_state_dict(torch.load('ecg_maxvit_best.pth'))
 model.eval()
+
+# Predict
+CLASS_NAMES = ['AHB', 'MI', 'Normal', 'PMI']
+
+def predict_ecg(image_path):
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406],
+                             [0.229, 0.224, 0.225])
+    ])
+    img = transform(Image.open(image_path).convert('RGB')).unsqueeze(0)
+    with torch.no_grad():
+        probs = torch.softmax(model(img), dim=1)
+    conf, idx = probs.max(1)
+    print(f"Predicted: {CLASS_NAMES[idx]} ({conf.item()*100:.1f}%)")
+
+predict_ecg("sample_ecg.png")
+# Output → Predicted: MI (97.3%)
 ```
 
 ---
@@ -114,7 +136,7 @@ pip install -r requirements.txt
 **Preprocessing:**
 - Images resized to **224 × 224**
 - Normalized with ImageNet mean and std
-- Color space augmentation (BGRA, XYZ, HLS, RGBA) — no rotation or flipping to preserve ECG waveform polarity
+- Color space augmentation only (BGRA, XYZ, HLS, RGBA) — rotations and flips were excluded to preserve ECG waveform morphology and lead polarity
 - Stratified split: **60% Train / 20% Validation / 20% Test**
 
 ---
@@ -141,6 +163,11 @@ ECGMaxViT/
 │       │── AHB/
 │       │── PMI/
 │       └── Normal/
+│
+│── outputs/               ← Saved model weights, plots (generated at runtime)
+│   │── ecg_maxvit_best.pth
+│   │── confusion_matrix.png
+│   └── training_curves.png
 ```
 
 **Notebook Sections:**
@@ -166,10 +193,14 @@ ECGMaxViT/
 Input Image (224 × 224 × 3)
         │
         ├──► ModCNN (EfficientNetV2-S) ──► 1280-dim local features
+        │         └─ Depthwise-separable convolutions
+        │             Global Average Pooling
         │
         ├──► MaxViT Module ──────────────► 512-dim global features
+        │         └─ Local window attention
+        │             Global grid attention
         │
-        └──► MLP Fusion
+        └──► MLP Fusion Head
                   Concatenate [1280 + 512] = 1792 dims
                   LayerNorm → FC(512) → GELU → Dropout(0.3)
                   FC(512 → 4)
@@ -182,19 +213,22 @@ Input Image (224 × 224 × 3)
 | MaxViTModule | maxvit_tiny_tf_224 | 512-dim | Global contextual features |
 | MLPFusion | Custom MLP | 4-class logits | Fusion + Classification |
 
-**Total Parameters:** 51,504,668 (~206 MB)
+**Total Parameters:** ~51.5M
 
 ---
 
 ## 📊 Results / Output
 
-### Best Performance
-| Metric | Value |
-|--------|-------|
-| **Validation Accuracy** | **96.74%** |
-| Best Validation F1 Score | 96.29% |
-| Training stopped at | Epoch 51 (early stopping) |
-| Final Training Accuracy | ~99.9% |
+### Overall Performance
+
+| Metric | Validation Set | Test Set |
+|--------|---------------|----------|
+| **Accuracy** | **96.74%** | *(run notebook to generate)* |
+| **F1 Score** | **96.29%** | *(run notebook to generate)* |
+| Precision | — | *(run notebook to generate)* |
+| Recall | — | *(run notebook to generate)* |
+
+> Test set metrics and per-class breakdown (including confusion matrix) are generated automatically at the end of the notebook.
 
 ### Training Progression
 
@@ -207,9 +241,9 @@ Input Image (224 × 224 × 3)
 | 40    | 0.3593    | 99.72%    | 96.06%  | 96.29% |
 | 51*   | —         | —         | **96.74%** | — |
 
-*Early stopped (patience = 20 epochs)
+*Early stopped at epoch 51 (patience = 20 epochs)
 
-### Training Configuration Used
+### Training Configuration
 
 | Hyperparameter | Value |
 |----------------|-------|
@@ -222,6 +256,16 @@ Input Image (224 × 224 × 3)
 | Gradient Clipping | max_norm = 1.0 |
 | Max Epochs | 100 |
 | Early Stopping Patience | 20 epochs |
+
+---
+
+## ⚠️ Limitations
+
+- Trained on ECG **image** data rather than raw signal data — performance may differ on raw signal-based approaches
+- Dataset size remains relatively limited (~2,600 original images across 4 classes)
+- External clinical validation was not performed
+- Model performance may vary across different hospitals, devices, or ECG recording standards
+- The training–validation accuracy gap suggests mild overfitting; further regularization or more data may improve generalization
 
 ---
 
@@ -243,44 +287,28 @@ Please make sure your code is clean and well-commented.
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-```
-MIT License — free to use, modify, and distribute with attribution.
-```
-
 ---
 
-## 👤 Author Information
+## 👤 Author
 
 **Developed by Chetan Chaudhari**
 
-- 📧 Feel free to open an issue for questions or suggestions
+- Feel free to open an [issue](../../issues) for questions or suggestions
 - ⭐ If you found this project helpful, please give it a star!
 
 ---
 
 ## 🙏 Acknowledgements
 
-- [timm](https://github.com/huggingface/pytorch-image-models) — EfficientNetV2-S and MaxViT pretrained models
+- [timm](https://github.com/huggingface/pytorch-image-models) — EfficientNetV2-S and MaxViT pretrained model weights
 - [Mendeley Data](https://data.mendeley.com/datasets/gwbz3fsgp8) — ECG Image Dataset
 - [Kaggle](https://kaggle.com) — GPU compute platform
 
 ---
 
-## 📚 Citation
+## 📚 References
 
-If you use this work in your research, please cite:
-
-```bibtex
-@misc{ecgmaxvit2026,
-  title        = {ECGMaxViT: A Hybrid CNN and MaxViT Model for 12-Lead ECG Image Classification},
-  author       = {Chetan Chaudhari},
-  year         = {2026},
-  howpublished = {\url{https://github.com/chetnchaudhari/ECGMaxVit.git}}
-}
-```
-
-**Dataset:**
-```
-ECG Image Dataset, Mendeley Data
-DOI: 10.17632/gwbz3fsgp8
-```
+- Dosovitskiy et al. — *An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale* (ViT)
+- Tu et al. — *MaxViT: Multi-Axis Vision Transformer* (ECCV 2022)
+- Tan & Le — *EfficientNetV2: Smaller Models and Faster Training* (ICML 2021)
+- ECG Image Dataset — Mendeley Data, DOI: [10.17632/gwbz3fsgp8](https://doi.org/10.17632/gwbz3fsgp8)
