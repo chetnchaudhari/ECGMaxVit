@@ -29,7 +29,7 @@ Manual ECG interpretation is time-consuming and requires expert knowledge. This 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/ECGMaxViT.git
+git clone https://github.com/chetnchaudhari/ECGMaxVit.git
 cd ECGMaxViT
 
 # 2. Install dependencies
@@ -275,7 +275,7 @@ If you use this work in your research, please cite:
   title        = {ECGMaxViT: A Hybrid CNN and MaxViT Model for 12-Lead ECG Image Classification},
   author       = {Chetan Chaudhari},
   year         = {2026},
-  howpublished = {\url{https://github.com/YOUR_USERNAME/ECGMaxViT}}
+  howpublished = {\url{https://github.com/chetnchaudhari/ECGMaxVit.git}}
 }
 ```
 
