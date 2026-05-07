@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Model weights (large files — use Git LFS or share separately)
+*.pth
+*.pt
+*.ckpt
+*.bin
+*.safetensors
+
+# Data directories (download separately from Mendeley Data)
+data/
+datasets/
+
+# Logs & outputs
+logs/
+runs/
+outputs/
+results/
+
+# Environment
+.env
+.venv
+venv/
+env/
+ENV/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
